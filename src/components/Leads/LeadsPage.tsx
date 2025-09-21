@@ -16,7 +16,7 @@ export function LeadsPage() {
   const { leads, deleteLead, loading } = useLeads();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [sourceFilter, setSourceFilter] = useState('');
+  const [canalFilter, setCanalFilter] = useState(''); // Mudança: canal em vez de source
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | undefined>();
   const [viewingLead, setViewingLead] = useState<Lead | undefined>();
@@ -35,14 +35,14 @@ export function LeadsPage() {
         lead.name.toLowerCase().includes(term) ||
         (lead.email || '').toLowerCase().includes(term) ||
         (lead.phone || '').toLowerCase().includes(term) ||
-        lead.source.toLowerCase().includes(term);
+        (lead.canal || '').toLowerCase().includes(term);
 
       const matchesStatus = !statusFilter || lead.status === statusFilter;
-      const matchesSource = !sourceFilter || lead.source === sourceFilter;
+      const matchesCanal = !canalFilter || lead.canal === canalFilter;
 
-      return matchesSearch && matchesStatus && matchesSource;
+      return matchesSearch && matchesStatus && matchesCanal;
     });
-  }, [leads, searchTerm, statusFilter, sourceFilter]);
+  }, [leads, searchTerm, statusFilter, canalFilter]);
 
   const handleViewLead = (lead: Lead) => {
     setViewingLead(lead);
@@ -96,13 +96,14 @@ export function LeadsPage() {
       />
     );
   }
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       {/* Debug: Informações do banco de dados */}
-      <DatabaseInfo />
+      {/* <DatabaseInfo /> */}
       
       {/* Debug: Teste de cores dos status */}
-      <StatusTest />
+      {/* <StatusTest /> */}
 
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -128,8 +129,9 @@ export function LeadsPage() {
         onSearchChange={setSearchTerm}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
-        sourceFilter={sourceFilter}
-        onSourceFilterChange={setSourceFilter}
+        canalFilter={canalFilter}
+        onCanalFilterChange={setCanalFilter}
+        leads={leads}
       />
 
       <div className="glass-table">

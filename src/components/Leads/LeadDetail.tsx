@@ -16,13 +16,6 @@ const statusLabels = {
   lost: 'Perdido',
 };
 
-const sourceLabels = {
-  website: 'Website',
-  social: 'Social Media',
-  referral: 'Indicação',
-  campaign: 'Campanha',
-};
-
 export function LeadDetail({ lead, onBack, onEdit }: LeadDetailProps) {
   const { user } = useAuth();
   const canEdit = user?.role !== 'viewer';
@@ -55,7 +48,7 @@ export function LeadDetail({ lead, onBack, onEdit }: LeadDetailProps) {
               <span className={`glass-badge status-${lead.status}`}>
                 {statusLabels[lead.status]}
               </span>
-              <span className="text-sm text-gray-500">{sourceLabels[lead.source]}</span>
+              <span className="text-sm text-gray-500">{lead.canal || 'Canal não informado'}</span>
             </div>
           </div>
           
@@ -84,7 +77,8 @@ export function LeadDetail({ lead, onBack, onEdit }: LeadDetailProps) {
                   <p className="text-xs text-gray-500">Email</p>
                 </div>
               </div>
-                {lead.phone && (
+              
+              {lead.phone && (
                 <div className="flex items-center">
                   <Phone className="w-5 h-5 text-gray-500 mr-4" />
                   <div>
@@ -137,8 +131,8 @@ export function LeadDetail({ lead, onBack, onEdit }: LeadDetailProps) {
               <div className="flex items-center">
                 <Tag className="w-5 h-5 text-gray-500 mr-4" />
                 <div>
-                  <p className="text-sm font-medium text-gray-800">{sourceLabels[lead.source]}</p>
-                  <p className="text-xs text-gray-500">Fonte</p>
+                  <p className="text-sm font-medium text-gray-800">{lead.canal || 'Canal não informado'}</p>
+                  <p className="text-xs text-gray-500">Canal</p>
                 </div>
               </div>
               

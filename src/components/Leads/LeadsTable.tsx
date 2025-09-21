@@ -69,9 +69,9 @@ export function LeadsTable({ leads, onViewLead, onEditLead, onDeleteLead }: Lead
             <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
               CEP
             </th>
-            <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+            {/* <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
               Atualizado
-            </th>
+            </th> */}
             <th className="px-6 py-4 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
               Ações
             </th>
@@ -103,7 +103,7 @@ export function LeadsTable({ leads, onViewLead, onEditLead, onDeleteLead }: Lead
                 </span>
               </td>
               <td className="px-6 py-4 text-sm text-gray-800">
-                {sourceLabels[lead.source]}
+                {lead.canal || 'Não informado'}
               </td>
               <td className="px-6 py-4 text-sm text-gray-800">
                 {lead.valorConta ? 
@@ -114,10 +114,10 @@ export function LeadsTable({ leads, onViewLead, onEditLead, onDeleteLead }: Lead
               <td className="px-6 py-4 text-sm text-gray-800">
                 {lead.cep || '-'}
               </td>
-              <td className="px-6 py-4 text-sm text-gray-600">
+              {/* <td className="px-6 py-4 text-sm text-gray-600">
                 <div>{formatDate(lead.updatedAt)}</div>
                 <div className="text-xs text-gray-500">por {lead.updatedBy}</div>
-              </td>
+              </td> */}
               <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end space-x-2">
                   <button

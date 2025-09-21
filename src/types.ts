@@ -1,9 +1,8 @@
 export interface User {
   id: string;
   email: string;
-  role: 'viewer' | 'manager' | 'admin';
   name: string;
-  avatar?: string;
+  role: 'admin' | 'user' | 'viewer';
 }
 
 export interface Lead {
@@ -14,9 +13,9 @@ export interface Lead {
   status: 'new' | 'contacted' | 'qualified' | 'lost';
   source: 'website' | 'social' | 'referral' | 'campaign';
   notes?: string;
-  // Campos específicos da tabela leads-duque
-  valorConta?: number;
-  cep?: string;
+  valorConta?: number; // Novo campo
+  cep?: string; // Novo campo
+  canal?: string; // Campo para o canal real do Supabase
   createdAt: string;
   updatedAt: string;
   updatedBy: string;
@@ -31,9 +30,9 @@ export interface AuthContextType {
 
 export interface LeadsContextType {
   leads: Lead[];
-  addLead: (lead: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'updatedBy'>) => void;
-  updateLead: (id: string, updates: Partial<Lead>) => void;
-  deleteLead: (id: string) => void;
+  addLead: (lead: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'updatedBy'>) => Promise<void>;
+  updateLead: (id: string, updates: Partial<Lead>) => Promise<void>;
+  deleteLead: (id: string) => Promise<void>;
   loading: boolean;
 }
 

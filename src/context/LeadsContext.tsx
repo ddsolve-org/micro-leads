@@ -21,7 +21,7 @@ type DbLeadRow = {
   valorConta: number | null;
   cep: string | null;
   canal: string | null;
-  status: string | null; // Nova coluna status
+  status: string | null;
   // Campos opcionais que podem existir na tabela
   created_at?: string;
   updated_at?: string;
@@ -30,21 +30,42 @@ type DbLeadRow = {
 
 const LeadsContext = createContext<LeadsContextType | undefined>(undefined);
 
-function mapCanalToSource(canal: string | null | undefined): Lead['source'] {
+// Função para inferir o source baseado no canal real (apenas para filtros)
+function inferSourceFromCanal(canal: string | null | undefined): Lead['source'] {
   if (!canal) return 'website';
   const normalizedCanal = canal.toLowerCase();
-  if (normalizedCanal.includes('social') || normalizedCanal.includes('facebook') || normalizedCanal.includes('instagram')) return 'social';
-  if (normalizedCanal.includes('indica') || normalizedCanal.includes('referral')) return 'referral';
-  if (normalizedCanal.includes('campanha') || normalizedCanal.includes('campaign')) return 'campaign';
+  
+  // Mapear baseado em palavras-chave no canal real
+  if (normalizedCanal.includes('trafego pago') || 
+      normalizedCanal.includes('facebook') || 
+      normalizedCanal.includes('instagram') || 
+      normalizedCanal.includes('google ads') ||
+      normalizedCanal.includes('social')) {
+    return 'social';
+  }
+  
+  if (normalizedCanal.includes('indica') || 
+      normalizedCanal.includes('referral') ||
+      normalizedCanal.includes('recomenda')) {
+    return 'referral';
+  }
+  
+  if (normalizedCanal.includes('campanha') || 
+      normalizedCanal.includes('campaign') ||
+      normalizedCanal.includes('promocao')) {
+    return 'campaign';
+  }
+  
   return 'website';
 }
 
+// Mapear source do front-end para valor de canal (apenas para novos leads criados no sistema)
 function mapSourceToCanal(source: Lead['source']): string {
   switch (source) {
-    case 'social': return 'Social Media';
-    case 'referral': return 'Indicação';
-    case 'campaign': return 'Campanha';
-    default: return 'Website';
+    case 'social': return 'Sistema - Social Media';
+    case 'referral': return 'Sistema - Indicação';
+    case 'campaign': return 'Sistema - Campanha';
+    default: return 'Sistema - Website';
   }
 }
 
@@ -102,12 +123,13 @@ function dbRowToLead(row: DbLeadRow, updatedByFallback: string, tableName: strin
     name: row.nome,
     email: row.numero ? `${row.nome.toLowerCase().replace(/\s+/g, '.')}@email.com` : '', // Email simulado se não tiver
     phone: row.numero || undefined,
-    status: mapDbStatusToLeadStatus(row.status), // Usar status real do banco
-    source: mapCanalToSource(row.canal),
+    status: mapDbStatusToLeadStatus(row.status),
+    source: inferSourceFromCanal(row.canal), // Inferir source apenas para filtros
     notes: noteParts.length > 0 ? noteParts.join(' | ') : undefined,
     // Campos específicos da tabela leads-duque
     valorConta: row.valorConta || undefined,
     cep: row.cep || undefined,
+    canal: row.canal || 'Não informado', // USAR O VALOR REAL DO BANCO
     createdAt,
     updatedAt,
     updatedBy: updatedByFallback,
@@ -204,8 +226,9 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
       const payload: Partial<DbLeadRow> = {
         nome: leadData.name,
         numero: leadData.phone ?? null,
-        canal: mapSourceToCanal(leadData.source),
-        status: mapLeadStatusToDbStatus(leadData.status), // Salvar status no banco
+        // Se o lead tem um canal específico, use ele; senão, mapeia do source
+        canal: leadData.canal || mapSourceToCanal(leadData.source),
+        status: mapLeadStatusToDbStatus(leadData.status),
         valorConta: leadData.valorConta ?? null,
         cep: leadData.cep ?? null,
       };
@@ -256,8 +279,12 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
       
       if (updates.name !== undefined) payload.nome = updates.name;
       if (updates.phone !== undefined) payload.numero = updates.phone || null;
-      if (updates.source !== undefined) payload.canal = mapSourceToCanal(updates.source);
-      if (updates.status !== undefined) payload.status = mapLeadStatusToDbStatus(updates.status); // Atualizar status
+      if (updates.canal !== undefined) payload.canal = updates.canal; // Usar canal real
+      if (updates.source !== undefined && !updates.canal) {
+        // Só mapear source se não tiver canal específico
+        payload.canal = mapSourceToCanal(updates.source);
+      }
+      if (updates.status !== undefined) payload.status = mapLeadStatusToDbStatus(updates.status);
       if (updates.valorConta !== undefined) payload.valorConta = updates.valorConta || null;
       if (updates.cep !== undefined) payload.cep = updates.cep || null;
 

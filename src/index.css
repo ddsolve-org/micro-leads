@@ -27,7 +27,7 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/20 backdrop-blur-[16px] border border-white/40 rounded-2xl shadow-[0_8px_32px_rgba(31,38,135,0.15)] transition-all duration-200 ease-out;
+    @apply bg-white/80 backdrop-blur-[16px] border border-white/40 rounded-2xl shadow-[0_8px_32px_rgba(31,38,135,0.15)] transition-all duration-200 ease-out;
   }
   
   .glass-card:hover {
@@ -89,14 +89,16 @@
   }
   
   .glass-badge {
-    @apply rounded-full px-3 py-1 text-xs font-medium transition-all duration-150 ease-out;
+    @apply rounded-full px-3 py-1 text-xs font-medium transition-all duration-150 ease-out flex items-center;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
   }
 
   /* Action buttons */
   .action-button {
-    @apply text-gray-500 hover:text-gray-700 transition-all duration-200 ease-out;
+    @apply text-gray-500 hover:bg-amber-400/60 hover:shadow-[0_8px_24px_rgba(255,184,2,0.3)] hover:transform hover:translate-y-[-1px];
+    @apply active:transform active:translate-y-[0px] active:shadow-[0_4px_16px_rgba(255,184,2,0.2)];
+    @apply focus:ring-2 focus:ring-amber-400/30 focus:outline-none;
   }
   
   .action-button-trash {
@@ -137,8 +139,8 @@
 
 /* Status badges com CSS direto para garantir precedência */
 .glass-badge.status-new {
-  background: rgba(59, 131, 246, 0.25) !important;
-  border: 1px solid rgba(59, 131, 246, 0.5) !important;
+  background: rgba(59, 130, 246, 0.35) !important;
+  border: 1px solid rgba(59, 130, 246, 0.8) !important;
   color: rgb(30, 58, 138) !important;
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25) !important;
   backdrop-filter: blur(12px) !important;
@@ -146,8 +148,8 @@
 }
 
 .glass-badge.status-contacted {
-  background: rgba(245, 158, 11, 0.25) !important;
-  border: 1px solid rgba(245, 158, 11, 0.5) !important;
+  background: rgba(245, 158, 11, 0.35) !important;
+  border: 1px solid rgba(245, 158, 11, 0.8) !important;
   color: rgb(146, 64, 14) !important;
   box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25) !important;
   backdrop-filter: blur(12px) !important;
@@ -156,7 +158,7 @@
 
 .glass-badge.status-qualified {
   background: rgba(16, 185, 129, 0.25) !important;
-  border: 1px solid rgba(16, 185, 129, 0.5) !important;
+  border: 1px solid rgba(16, 185, 129, 0.8) !important;
   color: rgb(6, 78, 59) !important;
   box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25) !important;
   backdrop-filter: blur(12px) !important;
@@ -165,9 +167,37 @@
 
 .glass-badge.status-lost {
   background: rgba(239, 68, 68, 0.25) !important;
-  border: 1px solid rgba(239, 68, 68, 0.5) !important;
+  border: 1px solid rgba(239, 68, 68, 0.8) !important;
   color: rgb(127, 29, 29) !important;
   box-shadow: 0 4px 15px rgba(239, 68, 68, 0.25) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Role badges */
+.glass-badge.role-admin {
+  background: rgba(239, 68, 68, 0.25) !important;
+  border: 2px solid rgba(239, 68, 68, 0.8) !important;
+  color: rgb(127, 29, 29) !important;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.25) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.glass-badge.role-manager {
+  background: rgba(59, 130, 246, 0.25) !important;
+  border: 2px solid rgba(59, 130, 246, 0.8) !important;
+  color: rgb(30, 58, 138) !important;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.glass-badge.role-viewer {
+  background: rgba(107, 114, 128, 0.35) !important;
+  border: 2px solid rgba(107, 114, 128, 0.8) !important;
+  color: rgb(55, 65, 81) !important;
+  box-shadow: 0 4px 15px rgba(107, 114, 128, 0.25) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
 }

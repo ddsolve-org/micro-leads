@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Search, Filter } from 'lucide-react';
 
 interface LeadsFiltersProps {
   searchTerm: string;
-  onSearchChange: (term: string) => void;
+  onSearchChange: (value: string) => void;
   statusFilter: string;
-  onStatusFilterChange: (status: string) => void;
-  sourceFilter: string;
-  onSourceFilterChange: (source: string) => void;
+  onStatusFilterChange: (value: string) => void;
+  canalFilter: string;
+  onCanalFilterChange: (value: string) => void;
+  leads: any[]; // Para extrair canais únicos
 }
 
 export function LeadsFilters({
@@ -15,9 +16,20 @@ export function LeadsFilters({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
-  sourceFilter,
-  onSourceFilterChange,
+  canalFilter,
+  onCanalFilterChange,
+  leads,
 }: LeadsFiltersProps) {
+  // Extrair canais únicos dos leads para o filtro
+  const uniqueCanals = useMemo(() => {
+    const canals = leads
+      .map(lead => lead.canal)
+      .filter(canal => canal && canal.trim() !== '')
+      .filter((canal, index, arr) => arr.indexOf(canal) === index)
+      .sort();
+    return canals;
+  }, [leads]);
+
   return (
     <div className="glass-card p-6 mb-8">
       <div className="flex items-center justify-between mb-4">
@@ -29,7 +41,7 @@ export function LeadsFilters({
           onClick={() => {
             onSearchChange('');
             onStatusFilterChange('');
-            onSourceFilterChange('');
+            onCanalFilterChange('');
           }}
           className="text-sm text-amber-600 hover:text-amber-700 transition-colors duration-150 ease-out"
         >
@@ -42,7 +54,7 @@ export function LeadsFilters({
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
           <input
             type="text"
-            placeholder="Buscar por nome ou email..."
+            placeholder="Buscar por nome, email ou telefone..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             className="glass-input w-full pl-11"
@@ -62,15 +74,16 @@ export function LeadsFilters({
         </select>
 
         <select
-          value={sourceFilter}
-          onChange={(e) => onSourceFilterChange(e.target.value)}
+          value={canalFilter}
+          onChange={(e) => onCanalFilterChange(e.target.value)}
           className="glass-input"
         >
-          <option value="">Todas as fontes</option>
-          <option value="website">Website</option>
-          <option value="social">Social Media</option>
-          <option value="referral">Indicação</option>
-          <option value="campaign">Campanha</option>
+          <option value="">Todos os canais</option>
+          {uniqueCanals.map((canal) => (
+            <option key={canal} value={canal}>
+              {canal}
+            </option>
+          ))}
         </select>
       </div>
     </div>

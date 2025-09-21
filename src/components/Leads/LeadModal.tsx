@@ -10,18 +10,22 @@ interface LeadModalProps {
 }
 
 export function LeadModal({ isOpen, onClose, lead }: LeadModalProps) {
-  const { addLead, updateLead } = useLeads();  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    status: 'new' as Lead['status'],
-    source: 'website' as Lead['source'],
-    notes: '',
-    valorConta: '',
-    cep: '',
+  const { addLead, updateLead } = useLeads();
+  
+  const [formData, setFormData] = useState({
+    name: lead?.name || '',
+    email: lead?.email || '',
+    phone: lead?.phone || '',
+    status: lead?.status || 'new' as Lead['status'],
+    notes: lead?.notes || '',
+    valorConta: lead?.valorConta?.toString() || '',
+    cep: lead?.cep || '',
+    canal: lead?.canal || '',
   });
+  
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
   useEffect(() => {
     if (lead) {
       setFormData({
@@ -29,10 +33,10 @@ export function LeadModal({ isOpen, onClose, lead }: LeadModalProps) {
         email: lead.email,
         phone: lead.phone || '',
         status: lead.status,
-        source: lead.source,
         notes: lead.notes || '',
         valorConta: lead.valorConta?.toString() || '',
         cep: lead.cep || '',
+        canal: lead.canal || '',
       });
     } else {
       setFormData({
@@ -40,10 +44,10 @@ export function LeadModal({ isOpen, onClose, lead }: LeadModalProps) {
         email: '',
         phone: '',
         status: 'new',
-        source: 'website',
         notes: '',
         valorConta: '',
         cep: '',
+        canal: '',
       });
     }
     setErrors({});
@@ -65,43 +69,45 @@ export function LeadModal({ isOpen, onClose, lead }: LeadModalProps) {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validate()) return;
 
     setLoading(true);
+    try {
+      const leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'updatedBy'> = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim() || undefined,
+        status: formData.status,
+        source: 'website', // Valor padrão, será inferido do canal
+        notes: formData.notes.trim() || undefined,
+        valorConta: formData.valorConta ? parseFloat(formData.valorConta) : undefined,
+        cep: formData.cep.trim() || undefined,
+        canal: formData.canal.trim() || undefined,
+      };
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
+      if (lead) {
+        await updateLead(lead.id, leadData);
+      } else {
+        await addLead(leadData);
+      }
 
-    const submitData = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      status: formData.status,
-      source: formData.source,
-      notes: formData.notes,
-      valorConta: formData.valorConta ? parseFloat(formData.valorConta) : undefined,
-      cep: formData.cep || undefined,
-    };
-
-    if (lead) {
-      updateLead(lead.id, submitData);
-    } else {
-      addLead(submitData);
+      onClose();
+    } catch (error) {
+      console.error('Failed to submit lead:', error);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
-    onClose();
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-6 z-50">
-      <div className="glass-modal max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-white">
+      <div className="glass-modal max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-white/20">
           <h2 className="text-xl font-semibold text-gray-800">
             {lead ? 'Editar Lead' : 'Novo Lead'}
           </h2>
@@ -127,6 +133,7 @@ export function LeadModal({ isOpen, onClose, lead }: LeadModalProps) {
                 errors.name ? 'border-red-400/60' : ''
               }`}
               placeholder="Nome completo"
+              required
             />
             {errors.name && <p className="text-sm text-red-700 mt-1">{errors.name}</p>}
           </div>
@@ -144,6 +151,7 @@ export function LeadModal({ isOpen, onClose, lead }: LeadModalProps) {
                 errors.email ? 'border-red-400/60' : ''
               }`}
               placeholder="email@exemplo.com"
+              required
             />
             {errors.email && <p className="text-sm text-red-700 mt-1">{errors.email}</p>}
           </div>
@@ -159,7 +167,42 @@ export function LeadModal({ isOpen, onClose, lead }: LeadModalProps) {
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               className="glass-input w-full"
               placeholder="+55 11 99999-9999"
-            />          </div>
+            />
+          </div>
+
+          <div>
+            <label htmlFor="canal" className="block text-sm font-medium text-gray-800 mb-2">
+              Canal
+            </label>
+            <input
+              id="canal"
+              type="text"
+              value={formData.canal}
+              onChange={(e) => setFormData({ ...formData, canal: e.target.value })}
+              className="glass-input w-full"
+              placeholder="Ex: Franquia ABC - Trafego pago"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Canal de origem do lead (preenchido automaticamente pela landing page)
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="status" className="block text-sm font-medium text-gray-800 mb-2">
+              Status
+            </label>
+            <select
+              id="status"
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as Lead['status'] })}
+              className="glass-input w-full"
+            >
+              <option value="new">Novo</option>
+              <option value="contacted">Contatado</option>
+              <option value="qualified">Qualificado</option>
+              <option value="lost">Perdido</option>
+            </select>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -189,42 +232,6 @@ export function LeadModal({ isOpen, onClose, lead }: LeadModalProps) {
                 className="glass-input w-full"
                 placeholder="00000-000"
               />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-800 mb-2">
-                Status
-              </label>
-              <select
-                id="status"
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as Lead['status'] })}
-                className="glass-input w-full"
-              >
-                <option value="new">Novo</option>
-                <option value="contacted">Contatado</option>
-                <option value="qualified">Qualificado</option>
-                <option value="lost">Perdido</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="source" className="block text-sm font-medium text-gray-800 mb-2">
-                Fonte
-              </label>
-              <select
-                id="source"
-                value={formData.source}
-                onChange={(e) => setFormData({ ...formData, source: e.target.value as Lead['source'] })}
-                className="glass-input w-full"
-              >
-                <option value="website">Website</option>
-                <option value="social">Social Media</option>
-                <option value="referral">Indicação</option>
-                <option value="campaign">Campanha</option>
-              </select>
             </div>
           </div>
 

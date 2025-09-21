@@ -1,59 +1,65 @@
-import { useState } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { LeadsProvider } from './context/LeadsContext';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import { UsersProvider } from './context/UsersContext';
-import { LoginForm } from './components/Auth/LoginForm';
-import { RegisterForm } from './components/Auth/RegisterForm';
-import { Navbar } from './components/Layout/Navbar';
+import { LeadsProvider } from './context/LeadsContext';
+import { Layout } from './components/Layout/Layout';
+import { LoginPage } from './components/Auth/LoginPage';
 import { LeadsPage } from './components/Leads/LeadsPage';
 import { AdminPage } from './components/Admin/AdminPage';
+import { useAuth } from './context/AuthContext';
+
+function PrivateRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
+  const { user } = useAuth();
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/leads" replace />;
+  }
+  
+  return <>{children}</>;
+}
 
 function AppContent() {
   const { user } = useAuth();
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [currentPage, setCurrentPage] = useState('leads');
-
+  
   if (!user) {
-    return authMode === 'login' ? (
-      <LoginForm onToggleMode={() => setAuthMode('register')} />
-    ) : (
-      <RegisterForm onToggleMode={() => setAuthMode('login')} />
-    );
+    return <LoginPage />;
   }
-
-  const handlePageChange = (page: string) => {
-    setCurrentPage(page);
-  };
-
-  const renderCurrentPage = () => {
-    switch (currentPage) {
-      case 'admin':
-        return user.role === 'admin' ? <AdminPage /> : <LeadsPage />;
-      case 'leads':
-      default:
-        return <LeadsPage />;
-    }
-  };
-
+  
   return (
-    <div className="min-h-screen">
-      <Navbar currentPage={currentPage} onPageChange={handlePageChange} />
-      <main>
-        {renderCurrentPage()}
-      </main>
-    </div>
+    <UsersProvider>
+      <LeadsProvider>
+        <Layout>
+          <Routes>
+            <Route path="/leads" element={<LeadsPage />} />
+            <Route 
+              path="/admin" 
+              element={
+                <PrivateRoute allowedRoles={['admin']}>
+                  <AdminPage />
+                </PrivateRoute>
+              } 
+            />
+            <Route path="/" element={<Navigate to="/leads" replace />} />
+            <Route path="*" element={<Navigate to="/leads" replace />} />
+          </Routes>
+        </Layout>
+      </LeadsProvider>
+    </UsersProvider>
   );
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <UsersProvider>
-        <LeadsProvider>
-          <AppContent />
-        </LeadsProvider>
-      </UsersProvider>
-    </AuthProvider>
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
   );
 }
 
