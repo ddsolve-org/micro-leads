@@ -15,12 +15,13 @@ const LEADS_TABLES: string[] = (
 const DEFAULT_TABLE = LEADS_TABLES[0] || 'tabelas';
 
 type DbLeadRow = {
-  id: string;
+  id: string | number;
   nome: string;
   numero: string | null;
   valorConta: number | null;
   cep: string | null;
   canal: string | null;
+  status: string | null; // Nova coluna status
   // Campos opcionais que podem existir na tabela
   created_at?: string;
   updated_at?: string;
@@ -30,25 +31,59 @@ type DbLeadRow = {
 const LeadsContext = createContext<LeadsContextType | undefined>(undefined);
 
 function mapCanalToSource(canal: string | null | undefined): Lead['source'] {
-  const value = (canal || '').toLowerCase();
-  if (value.includes('site') || value === 'website') return 'website';
-  if (value.includes('social') || value === 'instagram' || value === 'facebook' || value === 'tiktok') return 'social';
-  if (value.includes('indic') || value === 'referral') return 'referral';
-  if (value.includes('camp') || value === 'campaign' || value === 'ads') return 'campaign';
+  if (!canal) return 'website';
+  const normalizedCanal = canal.toLowerCase();
+  if (normalizedCanal.includes('social') || normalizedCanal.includes('facebook') || normalizedCanal.includes('instagram')) return 'social';
+  if (normalizedCanal.includes('indica') || normalizedCanal.includes('referral')) return 'referral';
+  if (normalizedCanal.includes('campanha') || normalizedCanal.includes('campaign')) return 'campaign';
   return 'website';
 }
 
 function mapSourceToCanal(source: Lead['source']): string {
-  const map: Record<Lead['source'], string> = {
-    website: 'website',
-    social: 'social',
-    referral: 'referral',
-    campaign: 'campaign',
-  };
-  return map[source] || 'website';
+  switch (source) {
+    case 'social': return 'Social Media';
+    case 'referral': return 'Indicação';
+    case 'campaign': return 'Campanha';
+    default: return 'Website';
+  }
+}
+
+// Mapear status do banco para o front-end
+function mapDbStatusToLeadStatus(dbStatus: string | null | undefined): Lead['status'] {
+  if (!dbStatus) return 'new';
+  const normalizedStatus = dbStatus.toLowerCase();
+  switch (normalizedStatus) {
+    case 'new':
+    case 'novo':
+      return 'new';
+    case 'contacted':
+    case 'contatado':
+      return 'contacted';
+    case 'qualified':
+    case 'qualificado':
+      return 'qualified';
+    case 'lost':
+    case 'perdido':
+      return 'lost';
+    default:
+      return 'new';
+  }
+}
+
+// Mapear status do front-end para o banco
+function mapLeadStatusToDbStatus(status: Lead['status']): string {
+  switch (status) {
+    case 'new': return 'new';
+    case 'contacted': return 'contacted';
+    case 'qualified': return 'qualified';
+    case 'lost': return 'lost';
+    default: return 'new';
+  }
 }
 
 function dbRowToLead(row: DbLeadRow, updatedByFallback: string, tableName: string): Lead {
+  console.log('🔄 Mapeando dados da linha do banco:', row);
+  
   // Construir as notas com as informações disponíveis
   const noteParts: string[] = [];
   if (row.valorConta != null) {
@@ -62,12 +97,12 @@ function dbRowToLead(row: DbLeadRow, updatedByFallback: string, tableName: strin
   const createdAt = row.created_at || new Date().toISOString();
   const updatedAt = row.updated_at || new Date().toISOString();
 
-  return {
+  const lead: Lead = {
     id: `${tableName}:${String(row.id)}`,
     name: row.nome,
     email: row.numero ? `${row.nome.toLowerCase().replace(/\s+/g, '.')}@email.com` : '', // Email simulado se não tiver
     phone: row.numero || undefined,
-    status: 'new',
+    status: mapDbStatusToLeadStatus(row.status), // Usar status real do banco
     source: mapCanalToSource(row.canal),
     notes: noteParts.length > 0 ? noteParts.join(' | ') : undefined,
     // Campos específicos da tabela leads-duque
@@ -77,15 +112,14 @@ function dbRowToLead(row: DbLeadRow, updatedByFallback: string, tableName: strin
     updatedAt,
     updatedBy: updatedByFallback,
   };
+
+  console.log('✅ Lead mapeado:', lead);
+  return lead;
 }
 
 function parseCompositeId(id: string): { table: string; dbId: string } {
-  if (id.includes(':')) {
-    const [table, ...rest] = id.split(':');
-    return { table, dbId: rest.join(':') };
-  }
-  // fallback para ids antigos sem prefixo
-  return { table: DEFAULT_TABLE, dbId: id };
+  const [table, dbId] = id.split(':');
+  return { table: table || DEFAULT_TABLE, dbId: dbId || id };
 }
 
 export function LeadsProvider({ children }: { children: ReactNode }) {
@@ -95,24 +129,63 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
 
   const fetchFromTable = useCallback(
     async (table: string): Promise<Lead[]> => {
-      const { data, error } = await supabase.from(table).select('*');
-      if (error) throw new Error(`[${table}] ${error.message}`);
-      const mapped = (data as DbLeadRow[] | null)?.map((row) => dbRowToLead(row, user?.email || 'system', table)) || [];
-      return mapped;
+      console.log(`🔍 Buscando dados da tabela: ${table}`);
+      
+      try {
+        // Primeiro, vamos verificar se a tabela existe e tem dados
+        const { data, error, count } = await supabase
+          .from(table)
+          .select('*', { count: 'exact' });
+        
+        console.log(`📊 Resultado da consulta na tabela ${table}:`, {
+          data,
+          error,
+          count,
+          dataLength: data?.length
+        });
+
+        if (error) {
+          console.error(`❌ Erro na consulta da tabela ${table}:`, error);
+          throw new Error(`[${table}] ${error.message}`);
+        }
+
+        if (!data || data.length === 0) {
+          console.warn(`⚠️ Nenhum dado encontrado na tabela ${table}`);
+          return [];
+        }
+
+        const mapped = data.map((row) => {
+          console.log(`🔄 Processando linha:`, row);
+          return dbRowToLead(row as DbLeadRow, user?.email || 'system', table);
+        });
+        
+        console.log(`✅ ${mapped.length} leads mapeados da tabela ${table}:`, mapped);
+        return mapped;
+      } catch (err) {
+        console.error(`❌ Erro ao buscar dados da tabela ${table}:`, err);
+        return [];
+      }
     },
     [user?.email]
   );
 
   const fetchLeads = useCallback(async () => {
+    console.log('🚀 Iniciando busca de leads...');
+    console.log('📋 Tabelas configuradas:', LEADS_TABLES);
+    
     setLoading(true);
     try {
       const results = await Promise.all(
         LEADS_TABLES.map((table) => fetchFromTable(table))
       );
       const merged = results.flat();
+      
+      console.log('🎯 Resultado final - leads encontrados:', merged.length);
+      console.log('📄 Dados dos leads:', merged);
+      
       setLeads(merged);
     } catch (err) {
-      console.error('Erro ao carregar leads do Supabase:', err);
+      console.error('❌ Erro geral ao carregar leads:', err);
       setLeads([]);
     } finally {
       setLoading(false);
@@ -120,17 +193,24 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
   }, [fetchFromTable]);
 
   useEffect(() => {
+    console.log('🔄 useEffect - carregando leads...');
     fetchLeads();
-  }, [fetchLeads]);  const addLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'updatedBy'>) => {
+  }, [fetchLeads]);
+
+  const addLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'updatedBy'>) => {
+    console.log('➕ Adicionando novo lead:', leadData);
     setLoading(true);
     try {
       const payload: Partial<DbLeadRow> = {
         nome: leadData.name,
         numero: leadData.phone ?? null,
         canal: mapSourceToCanal(leadData.source),
+        status: mapLeadStatusToDbStatus(leadData.status), // Salvar status no banco
         valorConta: leadData.valorConta ?? null,
         cep: leadData.cep ?? null,
       };
+
+      console.log('📤 Payload para inserção:', payload);
 
       const targetTable = DEFAULT_TABLE;
 
@@ -140,14 +220,17 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
         .select('*')
         .single();
 
+      console.log('📥 Resposta da inserção:', { data, error });
+
       if (error) throw error;
 
       if (data) {
         const mapped = dbRowToLead(data as DbLeadRow, user?.email || 'system', targetTable);
         setLeads((prev) => [mapped, ...prev]);
+        console.log('✅ Lead adicionado com sucesso:', mapped);
       }
     } catch (err) {
-      console.error('Erro ao criar lead no Supabase:', err);
+      console.error('❌ Erro ao criar lead no Supabase:', err);
       // Fallback local em caso de erro
       const newLead: Lead = {
         ...leadData,
@@ -160,7 +243,10 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };  const updateLead = async (id: string, updates: Partial<Lead>) => {
+  };
+
+  const updateLead = async (id: string, updates: Partial<Lead>) => {
+    console.log('✏️ Atualizando lead:', id, updates);
     setLoading(true);
     try {
       const { table, dbId } = parseCompositeId(id);
@@ -171,8 +257,11 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
       if (updates.name !== undefined) payload.nome = updates.name;
       if (updates.phone !== undefined) payload.numero = updates.phone || null;
       if (updates.source !== undefined) payload.canal = mapSourceToCanal(updates.source);
+      if (updates.status !== undefined) payload.status = mapLeadStatusToDbStatus(updates.status); // Atualizar status
       if (updates.valorConta !== undefined) payload.valorConta = updates.valorConta || null;
       if (updates.cep !== undefined) payload.cep = updates.cep || null;
+
+      console.log('📤 Payload para atualização:', payload);
 
       const { data, error } = await supabase
         .from(table)
@@ -181,14 +270,17 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
         .select('*')
         .single();
 
+      console.log('📥 Resposta da atualização:', { data, error });
+
       if (error) throw error;
 
       if (data) {
         const mapped = dbRowToLead(data as DbLeadRow, user?.email || 'system', table);
         setLeads((prev) => prev.map((l) => (l.id === id ? { ...mapped } : l)));
+        console.log('✅ Lead atualizado com sucesso:', mapped);
       }
     } catch (err) {
-      console.error('Erro ao atualizar lead no Supabase:', err);
+      console.error('❌ Erro ao atualizar lead no Supabase:', err);
       // Fallback local em caso de erro
       setLeads((prev) =>
         prev.map((lead) =>
@@ -208,14 +300,20 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteLead = async (id: string) => {
+    console.log('🗑️ Deletando lead:', id);
     setLoading(true);
     try {
       const { table, dbId } = parseCompositeId(id);
       const { error } = await supabase.from(table).delete().eq('id', dbId);
+      
+      console.log('📥 Resposta da exclusão:', { error });
+      
       if (error) throw error;
+
       setLeads((prev) => prev.filter((lead) => lead.id !== id));
+      console.log('✅ Lead deletado com sucesso');
     } catch (err) {
-      console.error('Erro ao excluir lead no Supabase:', err);
+      console.error('❌ Erro ao excluir lead no Supabase:', err);
       setLeads((prev) => prev.filter((lead) => lead.id !== id));
     } finally {
       setLoading(false);
@@ -232,8 +330,8 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useLeads() {
   const context = useContext(LeadsContext);
-  if (context === undefined) {
-    throw new Error('useLeads must be used within a LeadsProvider');
+  if (!context) {
+    throw new Error('useLeads deve ser usado dentro de um LeadsProvider');
   }
   return context;
 }

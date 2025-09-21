@@ -7,15 +7,8 @@ interface LeadsTableProps {
   leads: Lead[];
   onViewLead: (lead: Lead) => void;
   onEditLead: (lead: Lead) => void;
-  onDeleteLead: (leadId: string) => void;
+  onDeleteLead: (lead: Lead) => void;
 }
-
-const statusColors = {
-  new: 'bg-blue-100 text-blue-800 border-blue-200',
-  contacted: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  qualified: 'bg-green-100 text-green-800 border-green-200',
-  lost: 'bg-red-100 text-red-800 border-red-200',
-};
 
 const statusLabels = {
   new: 'Novo',
@@ -66,7 +59,8 @@ export function LeadsTable({ leads, onViewLead, onEditLead, onDeleteLead }: Lead
             </th>
             <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
               Status
-            </th>            <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+            </th>
+            <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
               Canal
             </th>
             <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -107,7 +101,8 @@ export function LeadsTable({ leads, onViewLead, onEditLead, onDeleteLead }: Lead
                 <span className={`glass-badge status-${lead.status}`}>
                   {statusLabels[lead.status]}
                 </span>
-              </td>              <td className="px-6 py-4 text-sm text-gray-800">
+              </td>
+              <td className="px-6 py-4 text-sm text-gray-800">
                 {sourceLabels[lead.source]}
               </td>
               <td className="px-6 py-4 text-sm text-gray-800">
@@ -145,7 +140,7 @@ export function LeadsTable({ leads, onViewLead, onEditLead, onDeleteLead }: Lead
                   
                   {canDelete && (
                     <button
-                      onClick={() => onDeleteLead(lead.id)}
+                      onClick={() => onDeleteLead(lead)} 
                       className="action-button-trash hover:text-red-600 transition-all duration-200 ease-out p-2 rounded-lg hover:bg-white/20"
                       title="Excluir"
                     >

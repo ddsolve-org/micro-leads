@@ -7,17 +7,24 @@ import { LeadsFilters } from './LeadsFilters';
 import { LeadsTable } from './LeadsTable';
 import { LeadModal } from './LeadModal';
 import { LeadDetail } from './LeadDetail';
+import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { DatabaseInfo } from '../Debug/DatabaseInfo';
+import { StatusTest } from '../Debug/StatusTest';
 
 export function LeadsPage() {
   const { user } = useAuth();
-  const { leads, deleteLead } = useLeads();
+  const { leads, deleteLead, loading } = useLeads();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [sourceFilter, setSourceFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | undefined>();
   const [viewingLead, setViewingLead] = useState<Lead | undefined>();
+  
+  // Estados para modal de confirmação de exclusão
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const canCreate = user?.role !== 'viewer';
 
@@ -46,10 +53,29 @@ export function LeadsPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteLead = (leadId: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este lead?')) {
-      deleteLead(leadId);
+  const handleDeleteLead = (lead: Lead) => {
+    setLeadToDelete(lead);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!leadToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteLead(leadToDelete.id);
+      setShowDeleteModal(false);
+      setLeadToDelete(null);
+    } catch (error) {
+      console.error('Erro ao excluir lead:', error);
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setLeadToDelete(null);
   };
 
   const handleCloseModal = () => {
@@ -74,6 +100,9 @@ export function LeadsPage() {
     <div className="max-w-7xl mx-auto px-6 py-8">
       {/* Debug: Informações do banco de dados */}
       <DatabaseInfo />
+      
+      {/* Debug: Teste de cores dos status */}
+      <StatusTest />
 
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -116,6 +145,14 @@ export function LeadsPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         lead={editingLead}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={showDeleteModal}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        lead={leadToDelete}
+        loading={isDeleting}
       />
     </div>
   );

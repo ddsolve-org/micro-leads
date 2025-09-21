@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Mail, Phone, Calendar, User, Tag, FileText, Edit } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Calendar, User, Tag, FileText, Edit, MapPin } from 'lucide-react';
 import { Lead } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 
@@ -8,13 +8,6 @@ interface LeadDetailProps {
   onBack: () => void;
   onEdit: (lead: Lead) => void;
 }
-
-const statusColors = {
-  new: 'bg-blue-100 text-blue-800 border-blue-200',
-  contacted: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  qualified: 'bg-green-100 text-green-800 border-green-200',
-  lost: 'bg-red-100 text-red-800 border-red-200',
-};
 
 const statusLabels = {
   new: 'Novo',
@@ -115,7 +108,7 @@ export function LeadDetail({ lead, onBack, onEdit }: LeadDetailProps) {
               
               {lead.cep && (
                 <div className="flex items-center">
-                  <Mail className="w-5 h-5 text-gray-500 mr-4" />
+                  <MapPin className="w-5 h-5 text-gray-500 mr-4" />
                   <div>
                     <p className="text-sm font-medium text-gray-800">{lead.cep}</p>
                     <p className="text-xs text-gray-500">CEP</p>

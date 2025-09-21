@@ -39,10 +39,10 @@ export async function testSupabaseConnection() {
       const columns = Object.keys(sampleData[0]);
       console.log('✅ Colunas encontradas:', columns);
       
-      // Verificar se as colunas esperadas existem
-      const expectedColumns = ['id', 'nome', 'numero', 'valorConta', 'cep', 'canal'];
+      // Verificar se as colunas esperadas existem (incluindo a nova coluna status)
+      const expectedColumns = ['id', 'nome', 'numero', 'valorConta', 'cep', 'canal', 'status'];
       const missingColumns = expectedColumns.filter(col => !columns.includes(col));
-      const extraColumns = columns.filter(col => !expectedColumns.includes(col));
+      const extraColumns = columns.filter(col => !expectedColumns.includes(col) && !['created_at', 'updated_at'].includes(col));
       
       if (missingColumns.length > 0) {
         console.warn('⚠️  Colunas faltando:', missingColumns);
@@ -60,7 +60,8 @@ export async function testSupabaseConnection() {
           numero: row.numero,
           valorConta: row.valorConta,
           cep: row.cep,
-          canal: row.canal
+          canal: row.canal,
+          status: row.status // Mostrar o novo campo status
         });
       });
     } else {
