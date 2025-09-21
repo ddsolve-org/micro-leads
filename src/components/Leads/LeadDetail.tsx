@@ -91,13 +91,34 @@ export function LeadDetail({ lead, onBack, onEdit }: LeadDetailProps) {
                   <p className="text-xs text-gray-500">Email</p>
                 </div>
               </div>
-              
-              {lead.phone && (
+                {lead.phone && (
                 <div className="flex items-center">
                   <Phone className="w-5 h-5 text-gray-500 mr-4" />
                   <div>
                     <p className="text-sm font-medium text-gray-800">{lead.phone}</p>
                     <p className="text-xs text-gray-500">Telefone</p>
+                  </div>
+                </div>
+              )}
+              
+              {lead.valorConta && (
+                <div className="flex items-center">
+                  <Tag className="w-5 h-5 text-gray-500 mr-4" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">
+                      R$ {lead.valorConta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                    <p className="text-xs text-gray-500">Valor da Conta</p>
+                  </div>
+                </div>
+              )}
+              
+              {lead.cep && (
+                <div className="flex items-center">
+                  <Mail className="w-5 h-5 text-gray-500 mr-4" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">{lead.cep}</p>
+                    <p className="text-xs text-gray-500">CEP</p>
                   </div>
                 </div>
               )}

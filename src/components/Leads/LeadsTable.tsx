@@ -66,9 +66,14 @@ export function LeadsTable({ leads, onViewLead, onEditLead, onDeleteLead }: Lead
             </th>
             <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
               Status
+            </th>            <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+              Canal
             </th>
             <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-              Canal
+              Valor da Conta
+            </th>
+            <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+              CEP
             </th>
             <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
               Atualizado
@@ -102,9 +107,17 @@ export function LeadsTable({ leads, onViewLead, onEditLead, onDeleteLead }: Lead
                 <span className={`glass-badge status-${lead.status}`}>
                   {statusLabels[lead.status]}
                 </span>
+              </td>              <td className="px-6 py-4 text-sm text-gray-800">
+                {sourceLabels[lead.source]}
               </td>
               <td className="px-6 py-4 text-sm text-gray-800">
-                {sourceLabels[lead.source]}
+                {lead.valorConta ? 
+                  `R$ ${lead.valorConta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
+                  : '-'
+                }
+              </td>
+              <td className="px-6 py-4 text-sm text-gray-800">
+                {lead.cep || '-'}
               </td>
               <td className="px-6 py-4 text-sm text-gray-600">
                 <div>{formatDate(lead.updatedAt)}</div>

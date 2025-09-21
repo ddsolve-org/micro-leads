@@ -14,6 +14,9 @@ export interface Lead {
   status: 'new' | 'contacted' | 'qualified' | 'lost';
   source: 'website' | 'social' | 'referral' | 'campaign';
   notes?: string;
+  // Campos específicos da tabela leads-duque
+  valorConta?: number;
+  cep?: string;
   createdAt: string;
   updatedAt: string;
   updatedBy: string;

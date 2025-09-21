@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LeadsProvider } from './context/LeadsContext';
 import { UsersProvider } from './context/UsersContext';
@@ -28,10 +28,10 @@ function AppContent() {
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'admin':
-        return user.role === 'admin' ? <AdminPage /> : <LeadsPage onNavigate={handlePageChange} />;
+        return user.role === 'admin' ? <AdminPage /> : <LeadsPage />;
       case 'leads':
       default:
-        return <LeadsPage onNavigate={handlePageChange} />;
+        return <LeadsPage />;
     }
   };
 

@@ -10,18 +10,18 @@ interface LeadModalProps {
 }
 
 export function LeadModal({ isOpen, onClose, lead }: LeadModalProps) {
-  const { addLead, updateLead } = useLeads();
-  const [formData, setFormData] = useState({
+  const { addLead, updateLead } = useLeads();  const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     status: 'new' as Lead['status'],
     source: 'website' as Lead['source'],
     notes: '',
+    valorConta: '',
+    cep: '',
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
   useEffect(() => {
     if (lead) {
       setFormData({
@@ -31,6 +31,8 @@ export function LeadModal({ isOpen, onClose, lead }: LeadModalProps) {
         status: lead.status,
         source: lead.source,
         notes: lead.notes || '',
+        valorConta: lead.valorConta?.toString() || '',
+        cep: lead.cep || '',
       });
     } else {
       setFormData({
@@ -40,6 +42,8 @@ export function LeadModal({ isOpen, onClose, lead }: LeadModalProps) {
         status: 'new',
         source: 'website',
         notes: '',
+        valorConta: '',
+        cep: '',
       });
     }
     setErrors({});
@@ -61,7 +65,6 @@ export function LeadModal({ isOpen, onClose, lead }: LeadModalProps) {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -72,10 +75,21 @@ export function LeadModal({ isOpen, onClose, lead }: LeadModalProps) {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 500));
 
+    const submitData = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      status: formData.status,
+      source: formData.source,
+      notes: formData.notes,
+      valorConta: formData.valorConta ? parseFloat(formData.valorConta) : undefined,
+      cep: formData.cep || undefined,
+    };
+
     if (lead) {
-      updateLead(lead.id, formData);
+      updateLead(lead.id, submitData);
     } else {
-      addLead(formData);
+      addLead(submitData);
     }
 
     setLoading(false);
@@ -145,7 +159,37 @@ export function LeadModal({ isOpen, onClose, lead }: LeadModalProps) {
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               className="glass-input w-full"
               placeholder="+55 11 99999-9999"
-            />
+            />          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="valorConta" className="block text-sm font-medium text-gray-800 mb-2">
+                Valor da Conta (R$)
+              </label>
+              <input
+                id="valorConta"
+                type="number"
+                step="0.01"
+                value={formData.valorConta}
+                onChange={(e) => setFormData({ ...formData, valorConta: e.target.value })}
+                className="glass-input w-full"
+                placeholder="0,00"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="cep" className="block text-sm font-medium text-gray-800 mb-2">
+                CEP
+              </label>
+              <input
+                id="cep"
+                type="text"
+                value={formData.cep}
+                onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
+                className="glass-input w-full"
+                placeholder="00000-000"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

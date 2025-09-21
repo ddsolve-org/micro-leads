@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus } from 'lucide-react';
 import { Lead } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -7,12 +7,9 @@ import { LeadsFilters } from './LeadsFilters';
 import { LeadsTable } from './LeadsTable';
 import { LeadModal } from './LeadModal';
 import { LeadDetail } from './LeadDetail';
+import { DatabaseInfo } from '../Debug/DatabaseInfo';
 
-interface LeadsPageProps {
-  onNavigate: (page: string, leadId?: string) => void;
-}
-
-export function LeadsPage({ onNavigate }: LeadsPageProps) {
+export function LeadsPage() {
   const { user } = useAuth();
   const { leads, deleteLead } = useLeads();
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,11 +22,14 @@ export function LeadsPage({ onNavigate }: LeadsPageProps) {
   const canCreate = user?.role !== 'viewer';
 
   const filteredLeads = useMemo(() => {
+    const term = searchTerm.toLowerCase();
     return leads.filter((lead) => {
-      const matchesSearch = 
-        lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.email.toLowerCase().includes(searchTerm.toLowerCase());
-      
+      const matchesSearch =
+        lead.name.toLowerCase().includes(term) ||
+        (lead.email || '').toLowerCase().includes(term) ||
+        (lead.phone || '').toLowerCase().includes(term) ||
+        lead.source.toLowerCase().includes(term);
+
       const matchesStatus = !statusFilter || lead.status === statusFilter;
       const matchesSource = !sourceFilter || lead.source === sourceFilter;
 
@@ -70,9 +70,11 @@ export function LeadsPage({ onNavigate }: LeadsPageProps) {
       />
     );
   }
-
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
+      {/* Debug: Informações do banco de dados */}
+      <DatabaseInfo />
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Leads</h1>
