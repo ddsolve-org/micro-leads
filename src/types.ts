@@ -2,7 +2,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'user' | 'viewer';
+  role: 'admin' | 'manager' | 'viewer';
 }
 
 export interface Lead {
@@ -39,5 +39,6 @@ export interface LeadsContextType {
 export interface UsersContextType {
   users: User[];
   updateUserRole: (userId: string, role: User['role']) => Promise<void>;
+  resetUserPassword: (userId: string) => Promise<{ success: boolean; password?: string; error?: string }>;
   loading: boolean;
 }

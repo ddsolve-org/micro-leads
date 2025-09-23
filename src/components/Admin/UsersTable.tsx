@@ -1,26 +1,32 @@
 import React, { useState } from 'react';
-import { User, Shield, AlertTriangle } from 'lucide-react';
+import { User, Shield, AlertTriangle, Key } from 'lucide-react';
 import { User as UserType } from '../../types';
 import { useUsers } from '../../context/UsersContext';
 import { useAuth } from '../../context/AuthContext';
+import { ResetPasswordModal } from './ResetPasswordModal';
 
 export function UsersTable() {
-  const { users, updateUserRole, loading } = useUsers();
+  const { users, updateUserRole, resetUserPassword, loading } = useUsers();
   const { user: currentUser } = useAuth();
   const [changingRole, setChangingRole] = useState<string | null>(null);
-
+  const [resetPasswordState, setResetPasswordState] = useState<{
+    isOpen: boolean;
+    userId: string | null;
+    userName: string;
+    newPassword?: string;
+    isLoading: boolean;
+  }>({
+    isOpen: false,
+    userId: null,
+    userName: '',
+    newPassword: undefined,
+    isLoading: false
+  });
   const roleLabels = {
     viewer: 'Visualizador',
     manager: 'Gerente',
     admin: 'Administrador',
   };
-
-  const roleColors = {
-    viewer: 'bg-gray-100 text-gray-800',
-    manager: 'bg-blue-100 text-blue-800',
-    admin: 'bg-red-100 text-red-800',
-  };
-
   const handleRoleChange = async (userId: string, newRole: UserType['role']) => {
     const user = users.find(u => u.id === userId);
     if (!user) return;
@@ -45,6 +51,52 @@ export function UsersTable() {
         setChangingRole(null);
       }
     }
+  };
+
+  const handleResetPassword = (userId: string, userName: string) => {
+    setResetPasswordState({
+      isOpen: true,
+      userId,
+      userName,
+      newPassword: undefined,
+      isLoading: false
+    });
+  };
+
+  const handleResetPasswordConfirm = async () => {
+    if (!resetPasswordState.userId) return;
+
+    setResetPasswordState(prev => ({ ...prev, isLoading: true }));
+
+    try {
+      const result = await resetUserPassword(resetPasswordState.userId);
+      
+      if (result.success && result.password) {
+        setResetPasswordState(prev => ({
+          ...prev,
+          newPassword: result.password,
+          isLoading: false
+        }));
+      } else {
+        console.error('Erro ao resetar senha:', result.error);
+        alert(result.error || 'Erro ao resetar senha');
+        setResetPasswordState(prev => ({ ...prev, isLoading: false }));
+      }
+    } catch (error) {
+      console.error('Erro ao resetar senha:', error);
+      alert('Erro ao resetar senha');
+      setResetPasswordState(prev => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  const handleResetPasswordClose = () => {
+    setResetPasswordState({
+      isOpen: false,
+      userId: null,
+      userName: '',
+      newPassword: undefined,
+      isLoading: false
+    });
   };
 
   if (loading && users.length === 0) {
@@ -74,8 +126,7 @@ export function UsersTable() {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full">
-          <thead className="bg-white/10 backdrop-blur-[8px]">
+        <table className="min-w-full">          <thead className="bg-white/10 backdrop-blur-[8px]">
             <tr>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                 Usuário
@@ -85,6 +136,9 @@ export function UsersTable() {
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                 Alterar Role
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                Ações
               </th>
             </tr>
           </thead>
@@ -128,11 +182,25 @@ export function UsersTable() {
                       </select>
                       {changingRole === user.id && (
                         <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                      )}
-                      {user.role === 'admin' && users.filter(u => u.role === 'admin').length === 1 && (
-                        <AlertTriangle className="w-4 h-4 text-amber-500" title="Último administrador" />
+                      )}                      {user.role === 'admin' && users.filter(u => u.role === 'admin').length === 1 && (
+                        <div title="Último administrador">
+                          <AlertTriangle className="w-4 h-4 text-amber-500" />
+                        </div>
                       )}
                     </div>
+                  )}                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {user.id === currentUser?.id ? (
+                    <span className="text-sm text-gray-600">Não é possível resetar sua própria senha</span>
+                  ) : (
+                    <button
+                      onClick={() => handleResetPassword(user.id, user.name)}
+                      className="glass-button-secondary text-sm px-3 py-2 flex items-center space-x-2"
+                      title="Resetar senha do usuário"
+                    >
+                      <Key className="w-4 h-4" />
+                      <span>Resetar Senha</span>
+                    </button>
                   )}
                 </td>
               </tr>
@@ -140,6 +208,15 @@ export function UsersTable() {
           </tbody>
         </table>
       </div>
+
+      <ResetPasswordModal
+        isOpen={resetPasswordState.isOpen}
+        onClose={handleResetPasswordClose}
+        onConfirm={handleResetPasswordConfirm}
+        userName={resetPasswordState.userName}
+        newPassword={resetPasswordState.newPassword}
+        isLoading={resetPasswordState.isLoading}
+      />
     </div>
   );
 }

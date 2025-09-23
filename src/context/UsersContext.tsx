@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types';
 import { supabase } from '../lib/supabaseClient';
-import { hashPassword } from '../utils/auth';
+import { hashPassword, generateTemporaryPassword } from '../utils/auth';
 
 interface DbUser {
   id: string;
@@ -24,6 +24,7 @@ interface UsersContextType {
   }) => Promise<{ success: boolean; error?: string; password?: string }>;
   updateUserRole: (userId: string, newRole: User['role']) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
+  resetUserPassword: (userId: string) => Promise<{ success: boolean; password?: string; error?: string }>;
   fetchUsers: () => Promise<void>;
 }
 
@@ -162,7 +163,6 @@ export function UsersProvider({ children }: { children: ReactNode }) {
       throw error;
     }
   };
-
   const deleteUser = async (userId: string) => {
     try {
       console.log('🗑️ Deletando usuário:', userId);
@@ -187,6 +187,42 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const resetUserPassword = async (userId: string): Promise<{ success: boolean; password?: string; error?: string }> => {
+    try {
+      console.log('🔄 Resetando senha do usuário:', userId);
+      
+      // Gerar nova senha temporária
+      const newPassword = generateTemporaryPassword();
+      
+      // Hash da nova senha
+      const passwordHash = await hashPassword(newPassword);
+
+      // Atualizar senha no banco
+      const { error } = await supabase
+        .from('users')
+        .update({ password_hash: passwordHash })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('❌ Erro ao resetar senha:', error);
+        return { success: false, error: error.message };
+      }
+      
+      console.log('✅ Senha resetada com sucesso');
+      
+      return { 
+        success: true, 
+        password: newPassword 
+      };
+      
+    } catch (error) {
+      console.error('❌ Erro ao resetar senha:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Erro desconhecido' 
+      };
+    }
+  };
   return (
     <UsersContext.Provider value={{
       users,
@@ -194,6 +230,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
       createUser,
       updateUserRole,
       deleteUser,
+      resetUserPassword,
       fetchUsers
     }}>
       {children}
