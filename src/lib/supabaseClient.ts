@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js';
+
 // Configuração robusta do Supabase com fallbacks
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
