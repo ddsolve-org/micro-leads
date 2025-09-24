@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthContextType } from '../types';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { verifyPassword, hashPassword } from '../utils/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,40 +38,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       console.log('🔐 Tentando fazer login para:', email);
-      console.log('🔗 Verificando conexão com Supabase...');
       
-      // Teste de conexão básica
-      const { data: testData, error: testError } = await supabase
-        .from('users')
-        .select('count')
-        .limit(1);
-      
-      if (testError) {
-        console.error('❌ Erro de conexão com Supabase:', testError);
+      // Se o Supabase não estiver configurado, use apenas fallback
+      if (!isSupabaseConfigured()) {
+        console.log('⚠️ Supabase não configurado, usando fallback');
         
-        // Fallback para usuário admin local para desenvolvimento
         if (email.toLowerCase() === 'admin@leads.com' && password === 'admin123') {
-          console.log('🔄 Usando fallback para admin local');
           const fallbackUser: User = {
-            id: 'admin-local',
+            id: 'admin-fallback',
             email: 'admin@leads.com',
-            name: 'Administrador',
+            name: 'Administrador (Fallback)',
             role: 'admin'
           };
           
           setUser(fallbackUser);
           localStorage.setItem('currentUser', JSON.stringify(fallbackUser));
-          console.log('✅ Login local realizado com sucesso');
+          console.log('✅ Login fallback realizado com sucesso');
           return true;
         }
         
         return false;
       }
-      
-      console.log('✅ Conexão com Supabase OK');
-      
+
       // Buscar usuário no Supabase
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('users')
         .select('*')
         .eq('email', email.toLowerCase())
@@ -82,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         console.error('❌ Erro ao buscar usuário:', error);
         
-        // Se não encontrou na base, tente o fallback admin
+        // Fallback para admin se não encontrar na base
         if (email.toLowerCase() === 'admin@leads.com' && password === 'admin123') {
           console.log('🔄 Usuário não encontrado na base, usando fallback admin');
           const fallbackUser: User = {
@@ -107,16 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const dbUser = data as DbUser;
-      console.log('👤 Usuário encontrado:', { 
-        id: dbUser.id, 
-        name: dbUser.name, 
-        email: dbUser.email,
-        role: dbUser.role,
-        hashType: dbUser.password_hash.substring(0, 10) + '...'
-      });
       
       // Verificar senha
-      console.log('🔒 Verificando senha...');
       const isValidPassword = await verifyPassword(password, dbUser.password_hash);
       
       if (!isValidPassword) {
@@ -162,10 +144,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    console.log('🚪 Fazendo logout...');
     setUser(null);
     localStorage.removeItem('currentUser');
-    console.log('✅ Logout realizado');
   };
 
   const register = async (email: string, password: string, name: string): Promise<boolean> => {
