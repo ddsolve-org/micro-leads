@@ -84,10 +84,6 @@ export function LeadsTable({ leads, onViewLead, onEditLead, onDeleteLead }: Lead
                 <div>
                   <div className="font-medium text-gray-800">{lead.name}</div>
                   <div className="flex items-center text-sm text-gray-600 space-x-4 mt-1">
-                    <span className="flex items-center">
-                      <Mail className="w-3 h-3 mr-1" />
-                      {lead.email}
-                    </span>
                     {lead.phone && (
                       <span className="flex items-center">
                         <Phone className="w-3 h-3 mr-1" />
