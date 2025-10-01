@@ -11,11 +11,13 @@ export default defineConfig({
     alias: {
       crypto: 'crypto-browserify',
     },
-  },
-  optimizeDeps: {
+  },  optimizeDeps: {
     include: ['crypto-browserify'],
   },  build: {
     rollupOptions: {
+      input: {
+        main: './index.html'
+      },
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
@@ -26,6 +28,7 @@ export default defineConfig({
     assetsDir: 'assets',
     sourcemap: false,
     minify: 'esbuild',
+    outDir: 'dist',
   },
   server: {
     host: true,
