@@ -15,4 +15,16 @@ export default defineConfig({
   optimizeDeps: {
     include: ['crypto-browserify'],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          supabase: ['@supabase/supabase-js'],
+        },
+      },
+    },
+  },
+  // Garantir que as variáveis de ambiente sejam expostas
+  envPrefix: 'VITE_',
 });

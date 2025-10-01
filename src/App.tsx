@@ -8,6 +8,7 @@ import { LoginPage } from './components/Auth/LoginPage';
 import { LeadsPage } from './components/Leads/LeadsPage';
 import { AdminPage } from './components/Admin/AdminPage';
 import { SupabaseConfigError } from './components/Error/SupabaseConfigError';
+import { ProductionDebug } from './components/Debug/ProductionDebug';
 import { useAuth } from './context/AuthContext';
 import { isSupabaseConfigured, getSupabaseConfigError, testConnection } from './lib/supabaseClient';
 
@@ -74,32 +75,42 @@ function App() {
 
   useEffect(() => {
     const checkSupabase = async () => {
-      console.log('🔍 Verificando configuração do Supabase...');
-      
-      // Primeiro, verificar se as variáveis estão definidas
-      if (!isSupabaseConfigured()) {
-        const error = getSupabaseConfigError();
-        console.error('❌ Configuração inválida:', error);
-        setConfigError(error);
-        setIsConfigured(false);
-        return;
-      }
-
-      // Testar conexão real
-      console.log('🌐 Testando conexão com Supabase...');
       try {
-        const connected = await testConnection();
-        if (connected) {
-          console.log('✅ Supabase configurado e conectado');
-          setIsConfigured(true);
-        } else {
-          console.error('❌ Falha na conexão com Supabase');
-          setConfigError('Não foi possível conectar ao Supabase');
+        console.log('🔍 Verificando configuração do Supabase...');
+        
+        // Adicionar um delay para garantir que o ambiente está carregado
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Primeiro, verificar se as variáveis estão definidas
+        if (!isSupabaseConfigured()) {
+          const error = getSupabaseConfigError();
+          console.error('❌ Configuração inválida:', error);
+          setConfigError(error);
+          setIsConfigured(false);
+          return;
+        }
+
+        // Testar conexão real
+        console.log('🌐 Testando conexão com Supabase...');
+        try {
+          const connected = await testConnection();
+          if (connected) {
+            console.log('✅ Supabase configurado e conectado');
+            setIsConfigured(true);
+          } else {
+            console.error('❌ Falha na conexão com Supabase');
+            setConfigError('Não foi possível conectar ao Supabase - verifique as configurações');
+            setIsConfigured(false);
+          }
+        } catch (connectionError) {
+          console.error('❌ Erro ao testar conexão:', connectionError);
+          setConfigError(`Erro de conexão: ${connectionError instanceof Error ? connectionError.message : 'Erro desconhecido'}`);
           setIsConfigured(false);
         }
-      } catch (error) {
-        console.error('❌ Erro ao testar conexão:', error);
-        setConfigError(error instanceof Error ? error.message : 'Erro desconhecido');
+        
+      } catch (generalError) {
+        console.error('❌ Erro geral na verificação:', generalError);
+        setConfigError(`Erro na inicialização: ${generalError instanceof Error ? generalError.message : 'Erro desconhecido'}`);
         setIsConfigured(false);
       }
     };
@@ -124,14 +135,18 @@ function App() {
   if (!isConfigured) {
     return <SupabaseConfigError error={configError || undefined} />;
   }
-
   // Se está configurado, mostrar app
   return (
-    <Router>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </Router>
+    <>
+      <Router>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </Router>
+      
+      {/* Debug component para produção */}
+      <ProductionDebug />
+    </>
   );
 }
 
