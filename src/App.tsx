@@ -77,9 +77,17 @@ function App() {
     const checkSupabase = async () => {
       try {
         console.log('🔍 Verificando configuração do Supabase...');
+        console.log('🌍 Ambiente:', import.meta.env.MODE);
+        console.log('📊 Variáveis disponíveis:', {
+          hasUrl: Boolean(import.meta.env.VITE_SUPABASE_URL),
+          hasKey: Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY),
+          hasTable: Boolean(import.meta.env.VITE_SUPABASE_LEADS_TABLE),
+          urlLength: import.meta.env.VITE_SUPABASE_URL?.length || 0,
+          keyLength: import.meta.env.VITE_SUPABASE_ANON_KEY?.length || 0
+        });
         
         // Adicionar um delay para garantir que o ambiente está carregado
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         // Primeiro, verificar se as variáveis estão definidas
         if (!isSupabaseConfigured()) {
