@@ -1,39 +1,65 @@
-// Configuração robusta do Supabase com fallbacks
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+import React from 'react';
+import { AlertCircle, Settings } from 'lucide-react';
 
-console.log('🔧 Configuração do Supabase:', {
-  url: supabaseUrl ? 'Configurado' : 'NÃO CONFIGURADO',
-  key: supabaseAnonKey ? 'Configurado' : 'NÃO CONFIGURADO',
-  env: import.meta.env.MODE || 'unknown'
-});
-
-if (!supabaseUrl) {
-  console.error('❌ VITE_SUPABASE_URL não está definido');
+interface SupabaseConfigErrorProps {
+  error?: string;
 }
 
-if (!supabaseAnonKey) {
-  console.error('❌ VITE_SUPABASE_ANON_KEY não está definido');
-}
-
-// Criar cliente apenas se as variáveis estiverem configuradas
-export const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-      }
-    })
-  : null;
-
-// Função para verificar se o Supabase está configurado
-export function isSupabaseConfigured(): boolean {
-  return Boolean(supabaseUrl && supabaseAnonKey && supabase);
-}
-
-// Função para mostrar erro de configuração
-export function getSupabaseConfigError(): string | null {
-  if (!supabaseUrl) return 'URL do Supabase não configurada';
-  if (!supabaseAnonKey) return 'Chave anônima do Supabase não configurada';
-  return null;
+export function SupabaseConfigError({ error }: SupabaseConfigErrorProps) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+      <div className="max-w-md w-full">
+        <div className="glass-card p-8 text-center">
+          <div className="w-20 h-20 bg-red-400/90 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="w-10 h-10 text-white" />
+          </div>
+          
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Erro de Configuração</h1>
+          
+          <p className="text-gray-600 mb-6">
+            {error || 'Erro na configuração do Supabase'}
+          </p>
+          
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start">
+              <Settings className="w-5 h-5 text-amber-600 mr-3 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-amber-800 text-left">
+                <p className="font-medium mb-2">Para resolver este problema:</p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>Acesse o painel do Vercel</li>
+                  <li>Vá em Settings → Environment Variables</li>
+                  <li>Adicione as seguintes variáveis:
+                    <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
+                      <li><code>VITE_SUPABASE_URL</code></li>
+                      <li><code>VITE_SUPABASE_ANON_KEY</code></li>
+                      <li><code>VITE_SUPABASE_LEADS_TABLE</code></li>
+                    </ul>
+                  </li>
+                  <li>Faça um novo deploy</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="text-sm text-blue-800 text-left">
+              <p className="font-medium mb-2">Valores a configurar:</p>
+              <div className="space-y-1 font-mono text-xs">
+                <div><strong>URL:</strong> https://hacuqhrpbqvmhkgdfuzr.supabase.co</div>
+                <div><strong>Key:</strong> eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</div>
+                <div><strong>Table:</strong> leads-duque</div>
+              </div>
+            </div>
+          </div>
+          
+          <button
+            onClick={() => window.location.reload()}
+            className="glass-button-primary w-full"
+          >
+            Tentar Novamente
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
