@@ -14,8 +14,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['crypto-browserify'],
-  },
-  build: {
+  },  build: {
     rollupOptions: {
       output: {
         manualChunks: {
@@ -24,6 +23,13 @@ export default defineConfig({
         },
       },
     },
+    assetsDir: 'assets',
+    sourcemap: false,
+    minify: 'esbuild',
+  },
+  server: {
+    host: true,
+    port: 3000,
   },
   // Garantir que as variáveis de ambiente sejam expostas
   envPrefix: 'VITE_',
