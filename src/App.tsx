@@ -8,7 +8,7 @@ import { LoginPage } from './components/Auth/LoginPage';
 import { LeadsPage } from './components/Leads/LeadsPage';
 import { AdminPage } from './components/Admin/AdminPage';
 import { SupabaseConfigError } from './components/Error/SupabaseConfigError';
-import { ProductionDebug } from './components/Debug/ProductionDebug';
+// import { ProductionDebug } from './components/Debug/ProductionDebug';
 import { useAuth } from './context/AuthContext';
 import { isSupabaseConfigured, getSupabaseConfigError, testConnection } from './lib/supabaseClient';
 
@@ -153,7 +153,7 @@ function App() {
       </Router>
       
       {/* Debug component para produção */}
-      <ProductionDebug />
+      {/* <ProductionDebug /> */}
     </>
   );
 }
